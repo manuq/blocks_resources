@@ -1,18 +1,30 @@
 class_name BlockResource
 extends Resource
 
-enum BlockType {
-	METHOD,
+enum Type {
+	LITERAL,
+	EXPRESSION,
 	STATEMENT,
-	VARIANT_EXPRESSION,
-	NODE_EXPRESSION,
+	METHOD,
+	# NODE_EXPRESSION,
 }
 
-@export var block_type: BlockType
+enum Category {
+	PHYSICS,
+	MATH,
+}
+@export var block_type: Type
+@export var category: Category
 
-func _init(p_block_type: BlockType):
-	block_type = block_type
+func _init(p_block_type: Type, p_category: Category):
+	block_type = p_block_type
+	category = p_category
 
-func get_output() -> String:
-	push_error("Not implemented")
+## Inconsistent means that the block is missing data. So it can't generate code yet.
+func is_inconsistent() -> bool:
+	push_error("Not implemented.")
+	return true
+
+func get_generated_code() -> String:
+	push_error("Not implemented.")
 	return ""
