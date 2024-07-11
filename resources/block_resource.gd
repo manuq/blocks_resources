@@ -3,10 +3,11 @@ extends Resource
 
 enum Type {
 	LITERAL,
+	VARIABLE,
 	EXPRESSION,
 	STATEMENT,
+	CONTROL,
 	METHOD,
-	# NODE_EXPRESSION,
 }
 
 enum Category {
@@ -20,8 +21,8 @@ func _init(p_block_type: Type, p_category: Category):
 	block_type = p_block_type
 	category = p_category
 
-## Inconsistent means that the block is missing data. So it can't generate code yet.
-func is_inconsistent() -> bool:
+## Fuzzy means that the block is missing data. So it can't generate code yet.
+func is_fuzzy() -> bool:
 	push_error("Not implemented.")
 	return true
 

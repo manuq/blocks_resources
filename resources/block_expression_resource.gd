@@ -1,7 +1,7 @@
 class_name BlockExpressionResource
 extends BlockResource
 
-@export var expression: String
+@export var template: String
 @export var argument_types: Dictionary = {}
 
 const ARGUMENTS_PATTERN = r"\{([^}]+)\}"
@@ -12,8 +12,8 @@ var _error_message: String
 var _arguments_regex: RegEx
 var _arguments: Dictionary = {}
 
-func _init(p_category: BlockResource.Category, p_expression: String, p_argument_types: Dictionary = {}, p_arguments: Dictionary = {}):
-		expression = p_expression
+func _init(p_category: BlockResource.Category, p_template: String, p_argument_types: Dictionary = {}, p_arguments: Dictionary = {}):
+		template = p_template
 		argument_types = p_argument_types
 		_arguments_regex = RegEx.new()
 		_arguments_regex.compile(ARGUMENTS_PATTERN)
@@ -42,26 +42,45 @@ func get_argument_names():
 	var regex_result_to_argument = func (result: RegExMatch):
 		return result.get_string().left(-1).right(-1)
 
-	var results = _arguments_regex.search_all(expression)
+	var results = _arguments_regex.search_all(template)
 	return results.map(regex_result_to_argument)
 
-func _has_valid_argument_types():
+func has_valid_argument_types():
 	var types = _get_bound_argument_types()
 	return types in argument_types
 
 func _check_valid_argument_types():
-	if not _has_valid_argument_types():
+	if has_unbound_arguments():
+		return
+	if not has_valid_argument_types():
 		_error_message = "Invalid argument types."
 	else:
 		_error_message = ""
 
+func _check_errors():
+	_check_valid_argument_types()
+
+func can_bind_argument(name: String, value: BlockResource):
+	for types in argument_types:
+		if types[name] in value.get_potential_types():
+			return true
+	return false
+
 func bind_argument(name: String, value: BlockResource):
+	if not can_bind_argument(name, value):
+		# This shouldn't be possible, the UI should try can_bind_argument() first:
+		push_error("Tried to bind an argument with a type that's not allowed.")
+		return
 	_arguments[name] = value
 	_check_valid_argument_types()
 
 func bind_arguments(p_arguments: Dictionary = {}):
 	unbind_arguments()
-	_arguments = p_arguments
+	for name in p_arguments:
+		bind_argument(name, p_arguments[name])
+
+func unbind_argument(name: String):
+	_arguments.erase(name)
 	_check_valid_argument_types()
 
 func unbind_arguments():
@@ -74,7 +93,7 @@ func _get_bound_argument_types():
 		types[name] = _arguments[name].get_type()
 	return types
 
-func _has_unbound_arguments():
+func has_unbound_arguments():
 	var to_bind = get_argument_names()
 	var bound_size = 0
 	for name in _arguments:
@@ -83,26 +102,32 @@ func _has_unbound_arguments():
 
 	return to_bind.size() > bound_size
 
-func is_inconsistent():
-	# TODO: Isn´t this the same as asking if it has errors?
-	return _has_unbound_arguments() or not _has_valid_argument_types()
+func is_fuzzy():
+	return has_unbound_arguments()
 
 func get_type() -> Variant.Type:
-	if _has_unbound_arguments():
+	if has_unbound_arguments():
 		return TYPE_NIL
 
 	var types = _get_bound_argument_types()
 	return argument_types.get(types, TYPE_NIL)
 
+func get_potential_types() -> Array:
+	return argument_types.values()
+
 func has_errors() -> bool:
+	_check_errors()
 	return not _error_message.is_empty()
 
 func get_error_message() -> String:
 	return _error_message
 
 func get_generated_code() -> String:
+	if is_fuzzy():
+		push_error("Tried to generate code from a fuzzy block.")
+		return ""
 	if has_errors():
-		push_error("Generating code from an inconsistent block.")
+		push_error("Tried to generate code from a block with errors.")
 		return ""
 	var generated_arguments = _get_generated_arguments()
-	return expression.format(generated_arguments)
+	return template.format(generated_arguments)

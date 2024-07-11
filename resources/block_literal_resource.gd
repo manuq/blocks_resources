@@ -3,19 +3,27 @@ extends BlockResource
 
 @export var value: String
 
-var _variant_type: Variant.Type
+var _type: Variant.Type
+
+# In case _type is TYPE_OBJECT, this should be the class name.
+# In other case, this should be empty. See how typed arrays are constructed for reference.
+var _class_name: StringName = &""
+
 var _error_message: String
 
-func _init(p_category: BlockResource.Category, p_value: String, p_variant_type = null):
+func _init(p_category: BlockResource.Category, p_value: String, p_type = null):
 	value = p_value
-	if p_variant_type != null:
-		_variant_type = p_variant_type
+	if p_type != null:
+		_type = p_type
 	else:
-		_infer_variant_type()
+		_infer_type()
 	super(BlockResource.Type.LITERAL, p_category)
 
 func get_type() -> Variant.Type:
-	return _variant_type
+	return _type
+
+func get_potential_types() -> Array:
+	return [_type]
 
 func has_errors() -> bool:
 	return not _error_message.is_empty()
@@ -23,7 +31,7 @@ func has_errors() -> bool:
 func get_error_message() -> String:
 	return _error_message
 
-func _infer_variant_type():
+func _infer_type():
 	var expression = Expression.new()
 	var error = expression.parse(value)
 	if error != OK:
@@ -33,7 +41,7 @@ func _infer_variant_type():
 	if expression.has_execute_failed():
 		_error_message = expression.get_error_text()
 		return
-	_variant_type = typeof(result) as Variant.Type
+	_type = typeof(result) as Variant.Type
 
 func get_generated_code():
 	return value
