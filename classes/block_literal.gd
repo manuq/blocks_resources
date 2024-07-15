@@ -1,5 +1,5 @@
-class_name BlockLiteralResource
-extends BlockResource
+class_name BlockLiteral
+extends Block
 
 @export var value: String
 
@@ -11,13 +11,13 @@ var _class_name: StringName = &""
 
 var _error_message: String
 
-func _init(p_category: BlockResource.Category, p_value: String, p_type = null):
+func _init(p_category: Block.Category, p_value: String, p_type = null):
 	value = p_value
 	if p_type != null:
 		_type = p_type
 	else:
 		_infer_type()
-	super(BlockResource.Type.LITERAL, p_category)
+	super(Block.Type.LITERAL, p_category)
 
 func get_type() -> Variant.Type:
 	return _type

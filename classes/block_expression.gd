@@ -1,5 +1,5 @@
-class_name BlockExpressionResource
-extends BlockResource
+class_name BlockExpression
+extends Block
 
 @export var template: String
 @export var argument_types: Dictionary = {}
@@ -12,20 +12,20 @@ var _error_message: String
 var _arguments_regex: RegEx
 var _arguments: Dictionary = {}
 
-func _init(p_category: BlockResource.Category, p_template: String, p_argument_types: Dictionary = {}, p_arguments: Dictionary = {}):
+func _init(p_category: Block.Category, p_template: String, p_argument_types: Dictionary = {}, p_arguments: Dictionary = {}):
 		template = p_template
 		argument_types = p_argument_types
 		_arguments_regex = RegEx.new()
 		_arguments_regex.compile(ARGUMENTS_PATTERN)
 		if p_arguments:
 			bind_arguments(p_arguments)
-		super(BlockResource.Type.EXPRESSION, p_category)
+		super(Block.Type.EXPRESSION, p_category)
 
-func _get_generated_code_from_argument(argument: BlockResource):
-	if argument is BlockExpressionResource:
+func _get_generated_code_from_argument(argument: Block):
+	if argument is BlockExpression:
 		# Add parens even if redundant, for safety:
 		return "(%s)" % argument.get_generated_code()
-	elif argument is BlockLiteralResource:
+	elif argument is BlockLiteral:
 		return argument.get_generated_code()
 	# TODO: Add variables here.
 	else:
@@ -60,13 +60,13 @@ func _check_valid_argument_types():
 func _check_errors():
 	_check_valid_argument_types()
 
-func can_bind_argument(name: String, value: BlockResource):
+func can_bind_argument(name: String, value: Block):
 	for types in argument_types:
 		if types[name] in value.get_potential_types():
 			return true
 	return false
 
-func bind_argument(name: String, value: BlockResource):
+func bind_argument(name: String, value: Block):
 	if not can_bind_argument(name, value):
 		# This shouldn't be possible, the UI should try can_bind_argument() first:
 		push_error("Tried to bind an argument with a type that's not allowed.")
